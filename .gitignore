@@ -13,3 +13,26 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+
+# Arquivos de cache e temporários
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/logs/laravel.log
+
+# Arquivos do sistema
+Thumbs.db
+.DS_Store
+desktop.ini
+*.tmp
+*.bak
+*~
+
+# Arquivos de backup e old
+*_old.*
+*-backup.*
+*.orig
+
+# Arquivos de desenvolvimento
+api-demo.blade.php
+test-*.php

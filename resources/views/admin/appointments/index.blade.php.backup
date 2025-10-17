@@ -1,12 +1,20 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agendamentos - Clínica Saúde</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+@extends('layouts.admin-clean')
+
+@section('title', 'Agendamentos')
+@section('content')
+<div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold text-gray-900">Agendamentos</h1>
+                <p class="text-xs md:text-sm text-gray-600 hidden sm:block">Gerencie todos os agendamentos da clínica</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto py-4 md:py-6 px-4 sm:px-6 lg:px-8">
+    <!-- Vou manter o conteúdo original aqui -->
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f4f7f9;
@@ -70,7 +78,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                     </svg>
                 </div>
-                <h2 class="text-lg md:text-xl font-bold text-gray-800">Clínica</h2>
+                <h2 id="clinic-name" class="text-lg md:text-xl font-bold text-gray-800"></h2>
             </div>
             <button id="close-sidebar" class="md:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100">
                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -539,6 +547,13 @@ function confirmDelete(appointmentId, patientName, scheduledAt) {
         form.submit();
     }
 }
+</script>
+
+<script>
+// Inicializar o nome da clínica quando a página carregar
+document.addEventListener('DOMContentLoaded', function() {
+    updateClinicName();
+});
 </script>
 
 </body>

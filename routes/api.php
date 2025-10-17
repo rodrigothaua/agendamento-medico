@@ -46,3 +46,29 @@ Route::prefix('payments')->group(function () {
 // Rotas de Gestão de Pacientes (Admin)
 // --------------------------------------------------------------------------------
 Route::apiResource('patients', PatientController::class);
+
+// Rotas de Configurações da API
+// --------------------------------------------------------------------------------
+use App\Http\Controllers\Api\SettingApiController;
+
+Route::prefix('settings')->group(function () {
+    // Configuração pública (sem autenticação - para frontend público)
+    Route::get('/public', [SettingApiController::class, 'getPublicConfig']);
+    Route::post('/check-blocked', [SettingApiController::class, 'checkBlocked']);
+    
+    // Rotas protegidas (requerem autenticação)
+    Route::middleware('api.auth')->group(function () {
+        // Configurações gerais
+        Route::get('/', [SettingApiController::class, 'index']); // ?group=general&key=clinic_name
+        Route::get('/grouped', [SettingApiController::class, 'getGrouped']);
+        Route::post('/', [SettingApiController::class, 'store']);
+        Route::post('/bulk', [SettingApiController::class, 'bulkUpdate']);
+        Route::delete('/{key}', [SettingApiController::class, 'destroy']);
+        
+        // Bloqueios de agenda
+        Route::get('/schedule-blocks', [SettingApiController::class, 'getScheduleBlocks']);
+        Route::post('/schedule-blocks', [SettingApiController::class, 'createScheduleBlock']);
+        Route::put('/schedule-blocks/{id}', [SettingApiController::class, 'updateScheduleBlock']);
+        Route::delete('/schedule-blocks/{id}', [SettingApiController::class, 'deleteScheduleBlock']);
+    });
+});

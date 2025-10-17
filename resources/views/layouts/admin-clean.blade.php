@@ -4,16 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title') - <span id="clinic-title">Clínica Saúde</span></title>
-    <!-- Inclua o Tailwind CSS -->
+    <title>@yield('title') - <span class="clinic-title">Clínica Saúde</span></title>
+    
+    <!-- Scripts e CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="{{ asset('js/settings-api.js') }}"></script>
     <script src="{{ asset('js/admin-utils.js') }}"></script>
-    <!-- Font Awesome para ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    @stack('styles')
+    
+    <!-- Estilos base -->
     <style>
-        /* Estilo para a fonte Inter */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body {
             font-family: 'Inter', sans-serif;
@@ -27,49 +26,16 @@
         .card:hover {
             transform: translateY(-3px);
         }
-        .sidebar-link {
-            transition: all 0.3s ease;
-        }
-        .sidebar-link:hover {
-            background-color: rgba(99, 102, 241, 0.1);
-            border-left: 4px solid #6366f1;
-        }
-        .sidebar-link.active {
-            background-color: rgba(99, 102, 241, 0.1);
-            border-left: 4px solid #6366f1;
-            color: #6366f1;
-        }
-        
-        /* Mobile Menu Toggle */
-        .mobile-menu-hidden {
-            transform: translateX(-100%);
-        }
-        .mobile-menu-visible {
-            transform: translateX(0);
-        }
-        
-        /* Scrollbar personalizado */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
     </style>
+    
+    @stack('styles')
 </head>
 <body class="bg-gray-50">
-    <div class="flex h-screen overflow-hidden">
+    <div class="flex min-h-screen">
         <!-- Sidebar Component -->
         <x-admin-sidebar :activeRoute="request()->route()->getName()" />
         
-        <!-- Main Content -->
+        <!-- Main Content Area -->
         <div class="flex-1 flex flex-col overflow-hidden lg:ml-0">
             <!-- Mobile Header -->
             <header class="lg:hidden bg-white shadow-sm border-b border-gray-200 px-4 py-3">
@@ -84,7 +50,7 @@
                 </div>
             </header>
             
-            <!-- Main Content Area -->
+            <!-- Page Content -->
             <main class="flex-1 overflow-y-auto">
                 @yield('content')
             </main>
@@ -94,8 +60,7 @@
     <!-- Toast Notifications -->
     <x-toast />
 
-
-
+    <!-- Global Script -->
     <script>
         // Inicializar o nome da clínica quando a página carregar
         document.addEventListener('DOMContentLoaded', function() {
@@ -104,6 +69,5 @@
     </script>
 
     @stack('scripts')
-    @yield('scripts')
 </body>
 </html>

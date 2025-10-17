@@ -27,6 +27,11 @@ Route::get('/', function () {
     return view('welcome'); // Ou sua view principal
 });
 
+// Rota para demonstração da API
+Route::get('/api-demo', function () {
+    return view('api-demo');
+})->name('api.demo');
+
 // ROTAS DE AUTENTICAÇÃO
 // Exibe o formulário de login
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
