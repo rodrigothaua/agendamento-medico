@@ -71,6 +71,30 @@ class AppointmentController extends Controller
         }
 
         $appointments = $query->paginate(15)->withQueryString();
+        
+        // Para o calendário, buscar todos os agendamentos do mês atual (sem paginação)
+        $calendarQuery = Appointment::with(['patient', 'payment']);
+        
+        // Aplicar os mesmos filtros para o calendário (exceto data específica para não limitar muito)
+        if ($request->filled('status') && $request->status !== 'all') {
+            $calendarQuery->where('status', $request->status);
+        }
+        
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $calendarQuery->whereHas('patient', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('cpf', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+        
+        // Para o calendário, mostrar agendamentos de 3 meses (anterior, atual e próximo)
+        $calendarStart = Carbon::now()->subMonth()->startOfMonth();
+        $calendarEnd = Carbon::now()->addMonth()->endOfMonth();
+        $calendarQuery->whereBetween('scheduled_at', [$calendarStart, $calendarEnd]);
+        
+        $calendarAppointments = $calendarQuery->orderBy('scheduled_at', 'asc')->get();
 
         // Estatísticas para filtros
         $stats = [
@@ -80,7 +104,7 @@ class AppointmentController extends Controller
             'canceled' => Appointment::where('status', 'canceled')->count(),
         ];
 
-        return view('admin.appointments.index', compact('appointments', 'stats'));
+        return view('admin.appointments.index', compact('appointments', 'stats', 'calendarAppointments'));
     }
 
     /**
