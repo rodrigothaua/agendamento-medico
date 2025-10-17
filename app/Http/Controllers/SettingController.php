@@ -92,23 +92,41 @@ class SettingController extends Controller
     public function storeScheduleBlock(Request $request)
     {
         $request->validate([
+            'block_mode' => 'required|in:single_date,date_range',
             'date' => 'required|date|after_or_equal:today',
+            'end_date' => 'required_if:block_mode,date_range|nullable|date|after_or_equal:date',
             'type' => 'required|in:full_day,time_range',
             'start_time' => 'required_if:type,time_range|nullable|date_format:H:i',
             'end_time' => 'required_if:type,time_range|nullable|date_format:H:i|after:start_time',
             'reason' => 'nullable|string|max:255',
         ]);
 
-        ScheduleBlock::create([
-            'date' => $request->date,
-            'type' => $request->type,
-            'start_time' => $request->type === 'time_range' ? $request->start_time : null,
-            'end_time' => $request->type === 'time_range' ? $request->end_time : null,
-            'reason' => $request->reason,
-            'is_active' => true,
-        ]);
+        if ($request->block_mode === 'date_range') {
+            ScheduleBlock::createDateRangeBlock(
+                $request->date,
+                $request->end_date,
+                $request->type,
+                $request->type === 'time_range' ? $request->start_time : null,
+                $request->type === 'time_range' ? $request->end_time : null,
+                $request->reason
+            );
+            
+            $message = 'Bloqueio de período criado com sucesso!';
+        } else {
+            ScheduleBlock::create([
+                'date' => $request->date,
+                'type' => $request->type,
+                'block_mode' => 'single_date',
+                'start_time' => $request->type === 'time_range' ? $request->start_time : null,
+                'end_time' => $request->type === 'time_range' ? $request->end_time : null,
+                'reason' => $request->reason,
+                'is_active' => true,
+            ]);
+            
+            $message = 'Bloqueio de horário criado com sucesso!';
+        }
 
-        return redirect()->back()->with('success', 'Bloqueio de horário criado com sucesso!');
+        return redirect()->back()->with('success', $message);
     }
 
     /**
@@ -117,7 +135,9 @@ class SettingController extends Controller
     public function updateScheduleBlock(Request $request, ScheduleBlock $block)
     {
         $request->validate([
+            'block_mode' => 'required|in:single_date,date_range',
             'date' => 'required|date',
+            'end_date' => 'required_if:block_mode,date_range|nullable|date|after_or_equal:date',
             'type' => 'required|in:full_day,time_range',
             'start_time' => 'required_if:type,time_range|nullable|date_format:H:i',
             'end_time' => 'required_if:type,time_range|nullable|date_format:H:i|after:start_time',
@@ -126,13 +146,15 @@ class SettingController extends Controller
 
         $block->update([
             'date' => $request->date,
+            'end_date' => $request->block_mode === 'date_range' ? $request->end_date : null,
             'type' => $request->type,
+            'block_mode' => $request->block_mode,
             'start_time' => $request->type === 'time_range' ? $request->start_time : null,
             'end_time' => $request->type === 'time_range' ? $request->end_time : null,
             'reason' => $request->reason,
         ]);
 
-        return redirect()->back()->with('success', 'Bloqueio de horário atualizado com sucesso!');
+        return redirect()->back()->with('success', 'Bloqueio atualizado com sucesso!');
     }
 
     /**

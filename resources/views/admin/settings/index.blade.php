@@ -391,14 +391,42 @@
                                 
                                 <form action="{{ route('admin.settings.schedule-blocks.store') }}" method="POST" class="space-y-4">
                                     @csrf
+                                    
+                                    <!-- Block Mode -->
+                                    <div class="mb-6">
+                                        <label class="block text-sm font-medium text-gray-700 mb-3">Modo de Bloqueio</label>
+                                        <div class="flex space-x-4">
+                                            <div class="flex items-center">
+                                                <input type="radio" id="single_date" name="block_mode" value="single_date" 
+                                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300" 
+                                                       checked onchange="toggleDateFields()">
+                                                <label for="single_date" class="ml-2 text-sm text-gray-700">Data Única</label>
+                                            </div>
+                                            <div class="flex items-center">
+                                                <input type="radio" id="date_range" name="block_mode" value="date_range" 
+                                                       class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300" 
+                                                       onchange="toggleDateFields()">
+                                                <label for="date_range" class="ml-2 text-sm text-gray-700">Período de Datas</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <!-- Date -->
+                                        <!-- Start Date -->
                                         <div>
-                                            <label for="block_date" class="block text-sm font-medium text-gray-700 mb-2">Data</label>
+                                            <label for="block_date" class="block text-sm font-medium text-gray-700 mb-2">Data de Início</label>
                                             <input type="date" id="block_date" name="date" 
                                                    min="{{ date('Y-m-d') }}"
                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
                                                    required>
+                                        </div>
+
+                                        <!-- End Date -->
+                                        <div id="end_date_field" style="display: none;">
+                                            <label for="block_end_date" class="block text-sm font-medium text-gray-700 mb-2">Data de Fim</label>
+                                            <input type="date" id="block_end_date" name="end_date" 
+                                                   min="{{ date('Y-m-d') }}"
+                                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                         </div>
 
                                         <!-- Block Type -->
@@ -472,22 +500,29 @@
                                                     </div>
                                                     <div>
                                                         <p class="text-sm font-medium text-gray-900">
-                                                            {{ \Carbon\Carbon::parse($block->date)->format('d/m/Y') }}
+                                                            @if($block->block_mode === 'date_range' && $block->end_date)
+                                                                {{ \Carbon\Carbon::parse($block->date)->format('d/m/Y') }} a {{ \Carbon\Carbon::parse($block->end_date)->format('d/m/Y') }}
+                                                            @else
+                                                                {{ \Carbon\Carbon::parse($block->date)->format('d/m/Y') }}
+                                                            @endif
                                                             @if($block->type === 'time_range' && $block->start_time && $block->end_time)
                                                                 - {{ \Carbon\Carbon::parse($block->start_time)->format('H:i') }} às {{ \Carbon\Carbon::parse($block->end_time)->format('H:i') }}
                                                             @else
                                                                 - Dia Inteiro
                                                             @endif
                                                         </p>
-                                                        @if($block->reason)
-                                                            <p class="text-sm text-gray-500">{{ $block->reason }}</p>
-                                                        @endif
+                                                        <p class="text-xs text-gray-400">
+                                                            {{ $block->block_mode === 'date_range' ? 'Período' : 'Data única' }}
+                                                            @if($block->reason)
+                                                                • {{ $block->reason }}
+                                                            @endif
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="flex-shrink-0 flex items-center space-x-2">
                                                 <!-- Edit Button -->
-                                                <button onclick="editBlock({{ $block->id }}, '{{ $block->date }}', '{{ $block->type }}', '{{ $block->start_time }}', '{{ $block->end_time }}', '{{ $block->reason }}')" 
+                                                <button onclick="editBlock({{ $block->id }}, '{{ $block->date }}', '{{ $block->type }}', '{{ $block->start_time }}', '{{ $block->end_time }}', '{{ $block->reason }}', '{{ $block->block_mode ?? 'single_date' }}', '{{ $block->end_date ?? '' }}')" 
                                                         class="text-indigo-600 hover:text-indigo-900" title="Editar">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -709,6 +744,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('block_type')) {
         toggleTimeFields();
     }
+    
+    // Initialize date fields on page load  
+    if (document.querySelector('input[name="block_mode"]')) {
+        toggleDateFields();
+    }
 
     // Load settings dynamically
     loadDynamicSettings();
@@ -880,10 +920,36 @@ function toggleTimeFields() {
     }
 }
 
-function editBlock(id, date, type, startTime, endTime, reason) {
+function toggleDateFields() {
+    const blockMode = document.querySelector('input[name="block_mode"]:checked').value;
+    const endDateField = document.getElementById('end_date_field');
+    const endDateInput = document.getElementById('block_end_date');
+    const startDateLabel = document.querySelector('label[for="block_date"]');
+    
+    if (blockMode === 'date_range') {
+        endDateField.style.display = 'block';
+        endDateInput.required = true;
+        startDateLabel.textContent = 'Data de Início';
+    } else {
+        endDateField.style.display = 'none';
+        endDateInput.required = false;
+        endDateInput.value = '';
+        startDateLabel.textContent = 'Data';
+    }
+}
+
+function editBlock(id, date, type, startTime, endTime, reason, blockMode = 'single_date', endDate = '') {
     // Create edit modal or form - for now, we'll use a simple prompt-based edit
-    const newDate = prompt('Nova data (YYYY-MM-DD):', date);
+    const newBlockMode = confirm('Clique OK para "Período de Datas" ou Cancelar para "Data Única"') ? 'date_range' : 'single_date';
+    
+    const newDate = prompt('Data de início (YYYY-MM-DD):', date);
     if (!newDate) return;
+    
+    let newEndDate = '';
+    if (newBlockMode === 'date_range') {
+        newEndDate = prompt('Data de fim (YYYY-MM-DD):', endDate || newDate);
+        if (!newEndDate) return;
+    }
     
     const newType = confirm('Clique OK para "Horário Específico" ou Cancelar para "Dia Inteiro"') ? 'time_range' : 'full_day';
     let newStartTime = '';
@@ -911,7 +977,9 @@ function editBlock(id, date, type, startTime, endTime, reason) {
     form.innerHTML = `
         <input type="hidden" name="_token" value="${csrfToken}">
         <input type="hidden" name="_method" value="PUT">
+        <input type="hidden" name="block_mode" value="${newBlockMode}">
         <input type="hidden" name="date" value="${newDate}">
+        <input type="hidden" name="end_date" value="${newEndDate}">
         <input type="hidden" name="type" value="${newType}">
         <input type="hidden" name="start_time" value="${newStartTime}">
         <input type="hidden" name="end_time" value="${newEndTime}">
