@@ -20,6 +20,15 @@ class Payment extends Model
         'status',
         'paid_at',
     ];
+
+    /**
+     * Os atributos que devem ser convertidos para datas.
+     */
+    protected $dates = [
+        'paid_at',
+        'created_at',
+        'updated_at',
+    ];
     
     /**
      * Um pagamento pertence a um agendamento.

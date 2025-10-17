@@ -20,6 +20,12 @@ class AdminController extends Controller
         $todayConfirmed = Appointment::where('status', 'confirmed')
             ->whereDate('scheduled_at', Carbon::today())
             ->count();
+        
+        // Estatísticas de pacientes
+        $newPatientsThisWeek = Patient::whereBetween('created_at', [
+            Carbon::now()->startOfWeek(),
+            Carbon::now()->endOfWeek()
+        ])->count();
 
         // 2. Agendamentos Recentes (ou Próximos)
         $appointments = Appointment::with(['patient', 'payment'])
@@ -33,6 +39,7 @@ class AdminController extends Controller
                 'pending' => $pendingAppointments,
                 'patients' => $totalPatients,
                 'today_confirmed' => $todayConfirmed,
+                'new_patients_week' => $newPatientsThisWeek,
             ],
             'appointments' => $appointments,
         ]);
