@@ -7,6 +7,7 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SettingController;
 // Importa o Middleware para proteger a rota do Dashboard
 use App\Http\Middleware\CheckAuth;
 
@@ -70,6 +71,20 @@ Route::middleware(CheckAuth::class)->prefix('admin')->group(function () {
     Route::get('/reports/financial', [ReportController::class, 'financial'])->name('admin.reports.financial');
     Route::get('/reports/export', [ReportController::class, 'export'])->name('admin.reports.export');
     Route::get('/reports/chart-data', [ReportController::class, 'chartData'])->name('admin.reports.chart-data');
+
+    // Rotas de Configurações
+    Route::get('/settings', [SettingController::class, 'index'])->name('admin.settings');
+    Route::post('/settings/general', [SettingController::class, 'updateGeneral'])->name('admin.settings.update.general');
+    Route::post('/settings/schedule', [SettingController::class, 'updateSchedule'])->name('admin.settings.update.schedule');
+    Route::post('/settings/notifications', [SettingController::class, 'updateNotifications'])->name('admin.settings.update.notifications');
+    Route::get('/settings/export', [SettingController::class, 'exportSettings'])->name('admin.settings.export');
+    Route::post('/settings/import', [SettingController::class, 'importSettings'])->name('admin.settings.import');
+    
+    // Rotas de Bloqueios de Agenda
+    Route::get('/settings/schedule-blocks', [SettingController::class, 'scheduleBlocks'])->name('admin.settings.schedule-blocks');
+    Route::post('/settings/schedule-blocks', [SettingController::class, 'storeScheduleBlock'])->name('admin.settings.schedule-blocks.store');
+    Route::put('/settings/schedule-blocks/{block}', [SettingController::class, 'updateScheduleBlock'])->name('admin.settings.schedule-blocks.update');
+    Route::delete('/settings/schedule-blocks/{block}', [SettingController::class, 'destroyScheduleBlock'])->name('admin.settings.schedule-blocks.destroy');
 
     // Aqui você adicionaria outras rotas administrativas protegidas
 });
