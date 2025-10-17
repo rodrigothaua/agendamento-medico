@@ -9,8 +9,8 @@ class ApiAuth
 {
     public function handle(Request $request, Closure $next)
     {
-        // Verificar se está em sessão (para chamadas do admin)
-        if ($request->session()->has('user_id') || $request->session()->has('user_name')) {
+        // Verificar se está em sessão (para chamadas do admin) - só se sessão estiver disponível
+        if ($request->hasSession() && ($request->session()->has('user_id') || $request->session()->has('user_name'))) {
             return $next($request);
         }
 
