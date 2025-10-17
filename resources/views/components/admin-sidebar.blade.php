@@ -84,6 +84,13 @@
                 </svg>
                 <span>Configurações</span>
             </a>
+            
+            <a href="{{ route('admin.profile.edit') }}" class="sidebar-link {{ str_starts_with($activeRoute, 'admin.profile') ? 'active' : '' }} flex items-center px-3 md:px-4 py-2 md:py-3 text-sm md:text-base text-gray-700 rounded-lg font-medium">
+                <svg class="w-4 h-4 md:w-5 md:h-5 mr-2 md:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+                <span>Meu Perfil</span>
+            </a>
         </div>
         
         <!-- User Section -->

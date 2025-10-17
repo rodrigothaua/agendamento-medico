@@ -8,6 +8,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\ProfileController;
 // Importa o Middleware para proteger a rota do Dashboard
 use App\Http\Middleware\CheckAuth;
 
@@ -90,6 +91,12 @@ Route::middleware(CheckAuth::class)->prefix('admin')->group(function () {
     Route::post('/settings/schedule-blocks', [SettingController::class, 'storeScheduleBlock'])->name('admin.settings.schedule-blocks.store');
     Route::put('/settings/schedule-blocks/{block}', [SettingController::class, 'updateScheduleBlock'])->name('admin.settings.schedule-blocks.update');
     Route::delete('/settings/schedule-blocks/{block}', [SettingController::class, 'destroyScheduleBlock'])->name('admin.settings.schedule-blocks.destroy');
+
+    // Rotas de Perfil
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('admin.profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('admin.profile.update-password');
+    Route::get('/profile/activity', [ProfileController::class, 'activity'])->name('admin.profile.activity');
 
     // Aqui você adicionaria outras rotas administrativas protegidas
 });
