@@ -96,17 +96,9 @@
             <div class="max-w-7xl mx-auto py-4 md:py-6 px-4 sm:px-6 lg:px-8">
 
                 <!-- Alerts -->
-                @if(session('success'))
-                    <div class="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                        {{ session('success') }}
-                    </div>
-                @endif
+                <!-- Feedback visual removido, apenas toast será exibido -->
 
-                @if(session('error'))
-                    <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                        {{ session('error') }}
-                    </div>
-                @endif
+                @include('components.toast')
 
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -278,8 +270,7 @@
                                                 </a>
 
                                                 <!-- Excluir -->
-                                                <button onclick="confirmDelete({{ $patient->id }}, '{{ $patient->name }}')" 
-                                                        class="text-red-600 hover:text-red-900" title="Excluir">
+                                                <button class="text-red-600 hover:text-red-900" title="Excluir" onclick="window.confirmDialog.show('Tem certeza que deseja excluir o paciente {{ addslashes($patient->name) }}?', function() { var form = document.getElementById('delete-form'); form.action = '{{ route('admin.patients.index') }}/{{ $patient->id }}'; form.submit(); }, 'Confirmação', 'delete')">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                     </svg>
@@ -324,82 +315,19 @@
 </div>
 
 <!-- Form para exclusão -->
+
+
+<!-- Reusable Confirm Dialog Component -->
+@include('components.confirm-dialog')
+
+
 <form id="delete-form" method="POST" style="display: none;">
     @csrf
     @method('DELETE')
 </form>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const closeSidebarButton = document.getElementById('close-sidebar');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('mobile-menu-overlay');
 
-    function toggleMobileMenu() {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('hidden');
-        document.body.classList.toggle('overflow-hidden');
-    }
-
-    function closeMobileMenu() {
-        sidebar.classList.remove('open');
-        overlay.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
-
-    if (mobileMenuButton) {
-        mobileMenuButton.addEventListener('click', toggleMobileMenu);
-    }
-
-    if (closeSidebarButton) {
-        closeSidebarButton.addEventListener('click', closeMobileMenu);
-    }
-
-    if (overlay) {
-        overlay.addEventListener('click', closeMobileMenu);
-    }
-
-    // Close menu when clicking on a link (mobile)
-    const sidebarLinks = sidebar.querySelectorAll('a');
-    sidebarLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            if (window.innerWidth < 768) {
-                closeMobileMenu();
-            }
-        });
-    });
-
-    // Close menu on resize to desktop
-    window.addEventListener('resize', function() {
-        if (window.innerWidth >= 768) {
-            closeMobileMenu();
-        }
-    });
-
-    // Handle escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !sidebar.classList.contains('hidden')) {
-            closeMobileMenu();
-        }
-    });
-});
-
-function confirmDelete(patientId, patientName) {
-    if (confirm(`Tem certeza que deseja excluir o paciente ${patientName}?`)) {
-        const form = document.getElementById('delete-form');
-        form.action = `{{ route('admin.patients.index') }}/${patientId}`;
-        form.submit();
-    }
-}
-</script>
-
-<script>
-// Inicializar o nome da clínica quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    updateClinicName();
-});
-</script>
+// ...existing code...
 
 </body>
 </html>

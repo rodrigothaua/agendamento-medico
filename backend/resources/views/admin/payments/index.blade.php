@@ -96,17 +96,7 @@
             <div class="max-w-7xl mx-auto py-4 md:py-6 px-4 sm:px-6 lg:px-8">
 
                 <!-- Alerts -->
-                @if(session('success'))
-                    <div class="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                        {{ session('error') }}
-                    </div>
-                @endif
+                <!-- Feedback visual removido, apenas toast será exibido -->
 
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -307,8 +297,7 @@
 
                                                 <!-- Excluir -->
                                                 @if($payment->status !== 'approved')
-                                                    <button onclick="confirmDelete({{ $payment->id }}, '{{ $payment->appointment->patient->name }}')" 
-                                                            class="text-red-600 hover:text-red-900" title="Excluir">
+                                                    <button class="text-red-600 hover:text-red-900" title="Excluir" onclick="showConfirmDeletePaymentModal({{ $payment->id }}, '{{ $payment->appointment->patient->name }}')">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                         </svg>
@@ -345,81 +334,47 @@
 </div>
 
 <!-- Form para exclusão -->
+
+<!-- Modal de confirmação de exclusão de pagamento -->
+<div id="confirmDeletePaymentModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+        <h2 class="text-lg font-semibold mb-4 text-gray-900">Confirmar Exclusão</h2>
+        <p id="confirmDeletePaymentText" class="mb-6 text-gray-700"></p>
+        <div class="flex justify-end space-x-2">
+            <button id="cancelDeletePaymentBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancelar</button>
+            <button id="okDeletePaymentBtn" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Excluir</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast de feedback -->
+
 <form id="delete-form" method="POST" style="display: none;">
     @csrf
     @method('DELETE')
 </form>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const closeSidebarButton = document.getElementById('close-sidebar');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('mobile-menu-overlay');
-
-    function toggleMobileMenu() {
-        sidebar.classList.toggle('open');
-        overlay.classList.toggle('hidden');
-        document.body.classList.toggle('overflow-hidden');
-    }
-
-    function closeMobileMenu() {
-        sidebar.classList.remove('open');
-        overlay.classList.add('hidden');
-        document.body.classList.remove('overflow-hidden');
-    }
-
-    if (mobileMenuButton) {
-        mobileMenuButton.addEventListener('click', toggleMobileMenu);
-    }
-
-    if (closeSidebarButton) {
-        closeSidebarButton.addEventListener('click', closeMobileMenu);
-    }
-
-    if (overlay) {
-        overlay.addEventListener('click', closeMobileMenu);
-    }
-
-    // Close menu when clicking on a link (mobile)
-    const sidebarLinks = sidebar.querySelectorAll('a');
-    sidebarLinks.forEach(link => {
-        link.addEventListener('click', function() {
-            if (window.innerWidth < 768) {
-                closeMobileMenu();
-            }
-        });
-    });
-
-    // Close menu on resize to desktop
-    window.addEventListener('resize', function() {
-        if (window.innerWidth >= 768) {
-            closeMobileMenu();
-        }
-    });
-
-    // Handle escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !sidebar.classList.contains('hidden')) {
-            closeMobileMenu();
-        }
-    });
-});
-
-function confirmDelete(paymentId, patientName) {
-    if (confirm(`Tem certeza que deseja excluir o pagamento do paciente ${patientName}?`)) {
+function showConfirmDeletePaymentModal(paymentId, patientName) {
+    const modal = document.getElementById('confirmDeletePaymentModal');
+    const text = document.getElementById('confirmDeletePaymentText');
+    text.textContent = `Tem certeza que deseja excluir o pagamento do paciente ${patientName}?`;
+    modal.classList.remove('hidden');
+    // Bind button actions
+    document.getElementById('okDeletePaymentBtn').onclick = function() {
+        modal.classList.add('hidden');
         const form = document.getElementById('delete-form');
         form.action = `{{ route('admin.payments.index') }}/${paymentId}`;
         form.submit();
-    }
+    toast.success('Pagamento excluído com sucesso!', 5000);
+    };
+    document.getElementById('cancelDeletePaymentBtn').onclick = function() {
+        modal.classList.add('hidden');
+    };
 }
-</script>
 
-<script>
-// Inicializar o nome da clínica quando a página carregar
-document.addEventListener('DOMContentLoaded', function() {
-    updateClinicName();
-});
+
+// ...existing code...
 </script>
 
 </body>

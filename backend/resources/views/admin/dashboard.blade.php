@@ -253,19 +253,19 @@
                                         </td>
                                         <td class="px-4 md:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div class="flex justify-end space-x-1 md:space-x-2">
-                                                <button class="text-indigo-600 hover:text-indigo-900 p-1">
+                                                <button class="text-indigo-600 hover:text-indigo-900 p-1" onclick="window.location='{{ route('admin.appointments.show', $appointment->id) }}'">
                                                     <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                     </svg>
                                                 </button>
-                                                <button class="text-green-600 hover:text-green-900 p-1 hidden sm:block">
+                                                <button class="text-green-600 hover:text-green-900 p-1 hidden sm:block" onclick="window.location='{{ route('admin.appointments.edit', $appointment->id) }}'">
                                                     <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                                     </svg>
                                                 </button>
                                                 @if($appointment->status !== 'canceled')
-                                                <button class="text-red-600 hover:text-red-900 p-1 hidden sm:block">
+                                                <button class="text-red-600 hover:text-red-900 p-1 hidden sm:block" onclick="window.confirmDialog.show('Tem certeza que deseja excluir o agendamento de {{ addslashes($appointment->patient->name ?? 'Paciente') }} para {{ \Carbon\Carbon::parse($appointment->scheduled_at)->format('d/m/Y H:i') }}?', function() { var form = document.getElementById('delete-form'); form.action = '{{ route('admin.appointments.index') }}/{{ $appointment->id }}'; form.submit(); }, 'Confirmação', 'delete')">
                                                     <svg class="w-3 h-3 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                     </svg>
@@ -299,9 +299,45 @@
                     </div>
                 </div>
             </div>
+            <!-- Form para exclusão global -->
+            <form id="delete-form" method="POST" style="display: none;">
+                @csrf
+                @method('DELETE')
+            </form>
+            <!-- Reusable Confirm Dialog Component global -->
+            @include('components.confirm-dialog')
         </main>
     </div>
 </div>
+
+<!-- Toast Notification -->
+<div id="dashboard-toast" class="fixed top-6 right-6 z-50 hidden">
+  <div id="toast-content" class="bg-blue-600 text-white px-6 py-3 rounded shadow-lg flex items-center space-x-2">
+    <span id="toast-icon">🔔</span>
+    <span id="toast-message"></span>
+    <button onclick="closeToast()" class="ml-4 text-white font-bold">&times;</button>
+  </div>
+</div>
+<script>
+function showToast(message, type = 'info') {
+  const toast = document.getElementById('dashboard-toast');
+  const msg = document.getElementById('toast-message');
+  const icon = document.getElementById('toast-icon');
+  const content = document.getElementById('toast-content');
+  msg.textContent = message;
+  let bg = 'bg-blue-600', icn = '🔔';
+  if (type === 'success') { bg = 'bg-green-600'; icn = '✅'; }
+  if (type === 'error') { bg = 'bg-red-600'; icn = '❌'; }
+  if (type === 'warning') { bg = 'bg-yellow-500 text-yellow-900'; icn = '⚠️'; }
+  content.className = `${bg} text-white px-6 py-3 rounded shadow-lg flex items-center space-x-2`;
+  icon.textContent = icn;
+  toast.classList.remove('hidden');
+    setTimeout(closeToast, 5000);
+}
+function closeToast() {
+  document.getElementById('dashboard-toast').classList.add('hidden');
+}
+</script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

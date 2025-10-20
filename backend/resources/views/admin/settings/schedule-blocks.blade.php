@@ -19,17 +19,8 @@
         </div>
 
         <!-- Success/Error Messages -->
-        @if(session('success'))
-            <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div class="mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
-                {{ session('error') }}
-            </div>
-        @endif
+        <!-- Feedback visual removido, apenas toast será exibido -->
+        @include('components.toast')
 
         <!-- Create New Block Form -->
         <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
@@ -178,14 +169,60 @@
                                             </button>
 
                                             <!-- Delete Button -->
-                                            <form action="{{ route('admin.settings.schedule-blocks.destroy', $block) }}" method="POST" class="inline"
-                                                  onsubmit="return confirm('Tem certeza que deseja remover este bloqueio?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-red-600 hover:text-red-900 transition duration-150 ease-in-out">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <button class="text-red-600 hover:text-red-900 transition duration-150 ease-in-out" onclick="showConfirmDeleteBlockModal({{ $block->id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="px-6 py-4 border-t border-gray-200">
+                    {{ $blocks->links() }}
+                </div>
+            @else
+                <div class="text-center py-8">
+                    <i class="fas fa-calendar-times text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600">Nenhum bloqueio de agenda cadastrado</p>
+                </div>
+            @endif
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmação de exclusão de bloqueio (reutilizável) -->
+@include('components.confirm-dialog', [
+    'dialogId' => 'confirmDeleteBlockModal',
+    'title' => 'Confirmar Exclusão',
+    'message' => 'Tem certeza que deseja remover este bloqueio?',
+    'confirmText' => 'Excluir',
+    'confirmColor' => 'red',
+    'cancelText' => 'Cancelar',
+])
+
+<form id="delete-block-form" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
+<script>
+function showConfirmDeleteBlockModal(blockId) {
+    window.confirmDialog.open({
+        id: 'confirmDeleteBlockModal',
+        onConfirm: function() {
+            const form = document.getElementById('delete-block-form');
+            form.action = `/admin/settings/schedule-blocks/${blockId}`;
+            form.submit();
+            toast.success('Bloqueio removido com sucesso!', 5000);
+        }
+    });
+}
+// ...existing code...
+</script>
                                         </div>
                                     </td>
                                 </tr>

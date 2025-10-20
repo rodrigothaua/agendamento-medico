@@ -92,18 +92,8 @@
         <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-50">
             <div class="max-w-7xl mx-auto py-4 md:py-6 px-4 sm:px-6 lg:px-8">
 
-                <!-- Alerts -->
-                @if(session('success'))
-                    <div class="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                        {{ session('error') }}
-                    </div>
-                @endif
+                <!-- Toast Feedback -->
+                @include('components.toast')
 
                 <!-- Tabs Navigation -->
                 <div class="mb-6">

@@ -1,3 +1,8 @@
+<!-- Form para exclusão -->
+<form id="delete-form" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -294,17 +299,9 @@
             <div class="max-w-7xl mx-auto py-4 md:py-6 px-4 sm:px-6 lg:px-8">
 
                 <!-- Alerts -->
-                @if(session('success'))
-                    <div class="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
-                        {{ session('success') }}
-                    </div>
-                @endif
+                <!-- Feedback visual removido, apenas toast será exibido -->
 
-                @if(session('error'))
-                    <div class="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                        {{ session('error') }}
-                    </div>
-                @endif
+                @include('components.toast')
 
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -601,8 +598,8 @@
 
                                                 <!-- Excluir -->
                                                 @if($appointment->status !== 'confirmed' || ($appointment->payment && $appointment->payment->status !== 'approved'))
-                                                    <button onclick="confirmDelete({{ $appointment->id }}, '{{ $appointment->patient->name ?? 'Paciente' }}', '{{ \Carbon\Carbon::parse($appointment->scheduled_at)->format('d/m/Y H:i') }}')" 
-                                                            class="text-red-600 hover:text-red-900" title="Excluir">
+                            <button onclick="window.confirmDialog.show('Tem certeza que deseja excluir o agendamento de {{ addslashes($appointment->patient->name ?? 'Paciente') }} para {{ \Carbon\Carbon::parse($appointment->scheduled_at)->format('d/m/Y H:i') }}?', function() { var form = document.getElementById('delete-form'); form.action = '{{ route('admin.appointments.index') }}/{{ $appointment->id }}'; form.submit(); }, 'Confirmação', 'delete')" 
+                                class="text-red-600 hover:text-red-900" title="Excluir">
                                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                                         </svg>
@@ -614,8 +611,8 @@
                                 @empty
                                     <tr>
                                         <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                             <h3 class="mt-2 text-sm font-medium text-gray-900">Nenhum agendamento encontrado</h3>
                                             <p class="mt-1 text-sm text-gray-500">Tente ajustar os filtros ou aguarde novos agendamentos.</p>
@@ -766,17 +763,9 @@
     </div>
 </div>
 
-<!-- Forms para ações -->
-<form id="status-form" method="POST" style="display: none;">
-    @csrf
-    @method('PATCH')
-    <input type="hidden" name="status" id="status-input">
-</form>
 
-<form id="delete-form" method="POST" style="display: none;">
-    @csrf
-    @method('DELETE')
-</form>
+<!-- Reusable Confirm Dialog Component -->
+@include('components.confirm-dialog')
 
 <script>
 // Global variables for calendar
@@ -1034,10 +1023,10 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('modal-payment-method').textContent = appointment.payment.payment_method || 'N/A';
             
             const paymentStatusConfig = {
-                'approved': { class: 'bg-green-100 text-green-800', text: 'Pago' },
-                'pending': { class: 'bg-yellow-100 text-yellow-800', text: 'Pendente' },
-                'failed': { class: 'bg-red-100 text-red-800', text: 'Falhou' },
-                'refunded': { class: 'bg-gray-100 text-gray-800', text: 'Estornado' }
+                'approved': { class: 'bg-green-100 text-green-800', 'text' => 'Pago' },
+                'pending': { class: 'bg-yellow-100 text-yellow-800', 'text' => 'Pendente' },
+                'failed': { class: 'bg-red-100 text-red-800', 'text' => 'Falhou' },
+                'refunded': { class: 'bg-gray-100 text-gray-800', 'text' => 'Estornado' }
             };
             
             const paymentStatus = paymentStatusConfig[appointment.payment.status] || { class: 'bg-gray-100 text-gray-800', text: appointment.payment.status };
@@ -1110,12 +1099,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const patientName = appointment.patient ? appointment.patient.name : 'Paciente';
         const scheduledAt = new Date(appointment.scheduled_at);
         const formattedDateTime = scheduledAt.toLocaleDateString('pt-BR') + ' ' + scheduledAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        
-        if (confirm(`Tem certeza que deseja excluir o agendamento de ${patientName} para ${formattedDateTime}?`)) {
+        window.confirmDialog.show(`Tem certeza que deseja excluir o agendamento de ${patientName} para ${formattedDateTime}?`, function() {
             const form = document.getElementById('delete-form');
             form.action = `{{ route('admin.appointments.index') }}/${appointment.id}`;
             form.submit();
-        }
+        }, 'Confirmação', 'delete');
     }
     
     function closeModal() {

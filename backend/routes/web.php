@@ -51,6 +51,8 @@ Route::middleware(CheckAuth::class)->prefix('admin')->group(function () {
     // Rotas de Agendamentos
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('admin.appointments.index');
     Route::get('/appointments/{id}', [AppointmentController::class, 'show'])->name('admin.appointments.show');
+    Route::get('/appointments/{id}/edit', [AppointmentController::class, 'edit'])->name('admin.appointments.edit');
+    Route::put('/appointments/{id}', [AppointmentController::class, 'update'])->name('admin.appointments.update');
     Route::patch('/appointments/{id}/update-status', [AppointmentController::class, 'updateStatus'])->name('admin.appointments.update-status');
     Route::delete('/appointments/{id}', [AppointmentController::class, 'destroy'])->name('admin.appointments.destroy');
 
