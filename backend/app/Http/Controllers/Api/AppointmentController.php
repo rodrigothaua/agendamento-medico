@@ -30,9 +30,28 @@ class AppointmentController extends Controller
             ->exists();
 
         if ($isDateFullyBlocked) {
+            // Obter informações do bloqueio total para retornar ao frontend
+            $activeBlocks = \App\Models\ScheduleBlock::where('is_active', true)
+                ->where('date', $date)
+                ->get()
+                ->map(function ($block) {
+                    return [
+                        'id' => $block->id,
+                        'type' => $block->type,
+                        'start_time' => $block->start_time,
+                        'end_time' => $block->end_time,
+                        'reason' => $block->reason
+                    ];
+                });
+
             return response()->json([
                 'available_slots' => [],
-                'blocked_reason' => 'Data totalmente bloqueada'
+                'blocked_reason' => 'Data totalmente bloqueada',
+                'date' => $date,
+                'active_blocks' => $activeBlocks,
+                'total_slots' => 0,
+                'available_count' => 0,
+                'booked_count' => 0
             ]);
         }
 
@@ -125,8 +144,8 @@ class AppointmentController extends Controller
                 return [
                     'id' => $block->id,
                     'type' => $block->type,
-                    'start_time' => $block->start_time ? $block->start_time->format('H:i') : null,
-                    'end_time' => $block->end_time ? $block->end_time->format('H:i') : null,
+                    'start_time' => $block->start_time,
+                    'end_time' => $block->end_time,
                     'reason' => $block->reason
                 ];
             });
@@ -160,7 +179,7 @@ class AppointmentController extends Controller
         $endDate = Carbon::parse($request->end_date);
         
         // Limitar a 60 dias para performance
-        if ($startDate->diffInDays($endDate) > 60) {
+            if ($startDate->diffInDays($endDate) > 60) {
             return response()->json([
                 'error' => 'Período muito longo. Máximo de 60 dias.'
             ], 400);
@@ -179,10 +198,20 @@ class AppointmentController extends Controller
             $isWorkDay = in_array($dayOfWeekLower, $workDays);
             
             // Verificar se está totalmente bloqueado
-            $isFullyBlocked = \App\Models\ScheduleBlock::where('is_active', true)
-                ->where('date', $dateStr)
-                ->where('type', 'full_day')
-                ->exists();
+                $isFullyBlocked = \App\Models\ScheduleBlock::where('is_active', true)
+                    ->where('type', 'full_day')
+                    ->where(function ($query) use ($dateStr) {
+                        $query->where(function ($q) use ($dateStr) {
+                            $q->where('block_mode', 'single_date')
+                              ->where('date', $dateStr);
+                        })
+                        ->orWhere(function ($q) use ($dateStr) {
+                            $q->where('block_mode', 'date_range')
+                              ->where('date', '<=', $dateStr)
+                              ->where('end_date', '>=', $dateStr);
+                        });
+                    })
+                    ->exists();
             
             // Contar slots disponíveis (versão simplificada para performance)
             $availableCount = 0;
@@ -199,8 +228,16 @@ class AppointmentController extends Controller
                 // Calcular total de slots possíveis
                 $totalSlots = $startHour->diffInMinutes($endHour) / $appointmentDuration;
                 
-                // Contar agendamentos ocupados
-                $bookedCount = Appointment::whereDate('scheduled_at', $dateStr)
+                // Gerar slots padrão para verificar ocupação correta
+                $standardSlots = [];
+                $period = CarbonPeriod::since($startHour)->minutes($appointmentDuration)->until($endHour);
+                foreach ($period as $time) {
+                    if ($time->equalTo($endHour)) continue;
+                    $standardSlots[] = $time->toDateTimeString();
+                }
+                
+                // Buscar agendamentos e verificar quais slots padrão estão ocupados
+                $bookedAppointments = Appointment::whereDate('scheduled_at', $dateStr)
                     ->where(function ($query) {
                         $query->where('status', 'confirmed')
                               ->orWhere(function ($query) {
@@ -208,7 +245,19 @@ class AppointmentController extends Controller
                                         ->where('created_at', '>', Carbon::now()->subMinutes(5));
                               });
                     })
-                    ->count();
+                    ->get();
+                
+                $bookedSlots = $bookedAppointments->map(function ($appointment) {
+                    return Carbon::parse($appointment->scheduled_at)->toDateTimeString();
+                })->toArray();
+                
+                // Contar apenas slots padrão que estão realmente ocupados
+                $bookedCount = 0;
+                foreach ($standardSlots as $slot) {
+                    if (in_array($slot, $bookedSlots)) {
+                        $bookedCount++;
+                    }
+                }
                 
                 // Contar slots bloqueados por horário
                 $timeRangeBlocks = \App\Models\ScheduleBlock::where('is_active', true)
@@ -232,7 +281,7 @@ class AppointmentController extends Controller
                 'is_fully_blocked' => $isFullyBlocked,
                 'available_slots' => (int) $availableCount,
                 'total_slots' => (int) $totalSlots,
-                'status' => $this->getDateAvailabilityStatus($isWorkDay, $isFullyBlocked, $availableCount)
+                'status' => $this->getDateAvailabilityStatus($isWorkDay, $isFullyBlocked, $availableCount, $totalSlots)
             ];
         }
 
@@ -249,7 +298,7 @@ class AppointmentController extends Controller
     /**
      * Determinar status de disponibilidade de uma data
      */
-    private function getDateAvailabilityStatus($isWorkDay, $isFullyBlocked, $availableCount)
+    private function getDateAvailabilityStatus($isWorkDay, $isFullyBlocked, $availableCount, $totalSlots = null)
     {
         if (!$isWorkDay) {
             return 'closed';
@@ -263,11 +312,12 @@ class AppointmentController extends Controller
             return 'full';
         }
         
-        if ($availableCount <= 2) {
-            return 'limited';
+        // Se temos total de slots, verificar se há bloqueios parciais
+        if ($totalSlots && $availableCount < $totalSlots && $availableCount > 0) {
+            return 'limited';  // Parcialmente bloqueado
         }
         
-        return 'available';
+        return 'available';  // Todos os slots disponíveis
     }
 
     /**

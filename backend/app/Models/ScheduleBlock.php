@@ -24,8 +24,8 @@ class ScheduleBlock extends Model
     protected $casts = [
         'date' => 'date',
         'end_date' => 'date',
-        'start_time' => 'datetime:H:i',
-        'end_time' => 'datetime:H:i',
+        'start_time' => 'string',
+        'end_time' => 'string',
         'is_active' => 'boolean'
     ];
 
